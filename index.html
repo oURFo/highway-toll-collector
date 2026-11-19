@@ -6,6 +6,10 @@
   <meta name="theme-color" content="#0f1720">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>國道收費員 Highway Toll Collector</title>
+  <meta property="og:title" content="國道收費員 Highway Toll Collector">
+  <meta property="og:description" content="民國 88 年春節連假，你是國道收費亭裡的收費員：認車種、驗回數票、心算找零，3 分鐘內別被解雇！">
+  <meta property="og:image" content="https://ourfo.github.io/highway-toll-collector/assets/og.jpg">
+  <link rel="preload" as="image" href="assets/keyart.webp">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎫</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css">
@@ -122,7 +126,8 @@
     <div id="timeUp" class="hidden">收班時間到！</div>
 
     <!-- 開始畫面 -->
-    <div id="startScreen" class="overlay">
+    <div id="startScreen" class="overlay start-screen">
+      <div class="start-hero"></div>
       <div class="start-card">
         <div class="title-wrap">
           <div class="title-plum">國道</div>
@@ -130,6 +135,10 @@
           <p class="title-en">HIGHWAY TOLL COLLECTOR</p>
           <p class="title-sub">民國 88 年・春節連假・泰山收費站 第 3 車道</p>
         </div>
+        <button id="btnTutorial" class="big-btn tut-btn">📖 新手教學<span id="tutBadge" class="rec-badge">第一次玩推薦</span></button>
+        <button id="btnStart" class="big-btn">開始上班</button>
+        <details class="rules">
+          <summary>📋 票價與規則</summary>
         <div class="fare-table">
           <div class="fare"><span class="fare-ico">🚗</span><span>小型車</span><b>40</b><i class="tk t-blue-mini">藍票</i></div>
           <div class="fare"><span class="fare-ico">🚌</span><span>大型車<small>遊覽車／貨車</small></span><b>50</b><i class="tk t-green-mini">綠票</i></div>
@@ -143,8 +152,7 @@
           <li><b class="hot">攔救護車一次、客訴 5 次、闖關／撞柵 3 次、損失超過 $500</b> 任一項 ＝ 解雇。</li>
           <li>第一次玩？先上<b>新手教學</b>，一步步帶你收費。</li>
         </ul>
-        <button id="btnTutorial" class="big-btn tut-btn">📖 新手教學<span id="tutBadge" class="rec-badge">第一次玩推薦</span></button>
-        <button id="btnStart" class="big-btn">開始上班</button>
+        </details>
         <p class="hint">建議直式手機遊玩・開啟音效體驗更佳</p>
       </div>
     </div>

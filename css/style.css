@@ -200,6 +200,22 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1016; col
 
 .overlay { position: fixed; inset: 0; z-index: 50; overflow-y: auto; background: radial-gradient(circle at 50% 20%, #1d3a5f, #0b1016 75%); display: flex; justify-content: center; padding: 16px 14px 28px; }
 .start-card { width: 100%; max-width: 440px; margin: auto 0; }
+.overlay.start-screen { padding: 0 14px 24px; background: #0b1016; }
+.start-hero { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: min(100%, 520px); aspect-ratio: 3 / 4; background: url("../assets/keyart.webp") center top / cover no-repeat; pointer-events: none; }
+.start-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(11, 16, 22, 0) 45%, rgba(11, 16, 22, .55) 62%, #0b1016 88%); }
+.start-screen .start-card { position: relative; margin: 0; padding-top: calc(min(100vw, 520px) * 1.333 * .56); }
+.start-screen .title-wrap { margin-bottom: 14px; }
+.start-screen .title-plum { width: 52px; height: 52px; font-size: 15px; margin-bottom: 4px; }
+.start-screen .title { font-size: 46px; text-shadow: 0 3px 0 #1d4f91, 0 0 2px #000, 0 6px 22px rgba(0, 0, 0, .95); }
+.start-screen .title-en, .start-screen .title-sub { text-shadow: 0 1px 4px #000; }
+.rules { margin-top: 14px; background: rgba(15, 23, 42, .75); border: 1px solid #334155; border-radius: 12px; padding: 8px 10px; }
+.rules summary { cursor: pointer; font-weight: 900; color: #fde68a; font-size: 15px; list-style: none; text-align: center; }
+.rules summary::-webkit-details-marker { display: none; }
+.rules summary::after { content: " ▾"; }
+.rules[open] summary::after { content: " ▴"; }
+.rules[open] summary { margin-bottom: 8px; }
+.rules .fare-table { background: none; border: 0; padding: 0; }
+.rules .howto { margin-bottom: 4px; }
 .title-wrap { text-align: center; margin-bottom: 12px; }
 .title-plum { width: 70px; height: 70px; margin: 0 auto 6px; display: grid; place-items: center; font-weight: 900; color: #1d4f91; background: #fff; font-size: 20px; clip-path: polygon(50% 0, 61% 12%, 79% 9%, 82% 27%, 98% 36%, 89% 52%, 98% 68%, 81% 75%, 77% 93%, 60% 88%, 50% 100%, 40% 88%, 23% 93%, 19% 75%, 2% 68%, 11% 52%, 2% 36%, 18% 27%, 21% 9%, 39% 12%); box-shadow: 0 0 0 4px #c0392b; }
 .title { margin: 0; font-size: 40px; font-weight: 900; letter-spacing: 6px; color: #fff; text-shadow: 0 3px 0 #1d4f91, 0 6px 16px rgba(0, 0, 0, .6); }
