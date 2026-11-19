@@ -58,6 +58,13 @@
         <button class="tab-btn active" data-tab="gate"><span class="tab-ico">🎫</span>票務與閘門</button>
         <button class="tab-btn" data-tab="cash"><span class="tab-ico">💰</span>收銀找零<span id="cashBadge" class="tab-badge hidden">💵</span></button>
       </div>
+      <div id="fareStrip">
+        <span class="fs-label">票價</span>
+        <span class="fs fs-blue">🚗小型車<b>40</b></span>
+        <span class="fs fs-green">🚌大型車<b>50</b></span>
+        <span class="fs fs-orange">🚛聯結車<b>65</b></span>
+        <span class="fs fs-free">🚑公務<b>免</b></span>
+      </div>
 
       <div id="tabGate" class="tab-page">
         <div class="tray-box">
@@ -97,6 +104,20 @@
       </div>
     </section>
 
+    <div id="coach" class="hidden">
+      <div class="coach-head">
+        <span class="coach-badge">新手教學</span>
+        <span id="coachStep"></span>
+        <button id="coachSkip">跳過教學 ✕</button>
+      </div>
+      <div id="coachText"></div>
+      <div class="coach-btns">
+        <button id="coachNext" class="hidden">下一步 ▶</button>
+        <button id="coachHome" class="hidden">回到標題</button>
+        <button id="coachPlay" class="hidden">開始上班 ▶</button>
+      </div>
+    </div>
+
     <div id="toast"></div>
     <div id="timeUp" class="hidden">收班時間到！</div>
 
@@ -115,15 +136,14 @@
           <div class="fare"><span class="fare-ico">🚛</span><span>聯結車<small>貨櫃拖車</small></span><b>65</b><i class="tk t-orange-mini">橘票</i></div>
           <div class="fare"><span class="fare-ico">🚑</span><span>救護／消防／警車</span><b>0</b><i class="tk free">免收・秒開閘</i></div>
         </div>
-        <p class="fare-warn">⚠ 開始上班後<b>系統不會再提示費率</b>，請牢記！</p>
+        <p class="fare-warn">💡 上班時畫面會顯示票價列，但收對收錯要自己判斷！</p>
         <ul class="howto">
-          <li>每 <b>7 秒</b>來一台車，停靠後駕駛耐心 <b>20 秒</b>，歸零就<b class="hot">撞斷柵欄</b>闖關（維修費 $300）。</li>
-          <li><b>回數票</b>：票色要對車種，再檢查<b>假票</b>（字跡模糊、缺角破損、過期、沒有「高公局驗訖」章）。對就【收下】，不對就【退回重給】。</li>
-          <li><b>現金</b>：切到【收銀找零】心算「付款 − 費率」，點面額後按【交付找零】，剛好就免找。</li>
-          <li>收完錢、找完錢再按【開閘放行】。<b class="hot">提早放行</b>＝錢沒收到或沒找完！</li>
-          <li><b class="hot">闖關車</b>衝過來時，3 秒內按【緊急拍照舉發】。</li>
-          <li><b class="hot">攔救護車一次、客訴 5 次、闖關／撞柵 3 次、損失超過 $500</b> 任一項 ＝ 直接解雇。</li>
+          <li>每 <b>7 秒</b>來一台車，駕駛只等 <b>20 秒</b>，等不到就<b class="hot">撞斷柵欄</b>。</li>
+          <li>核對<b>回數票</b>顏色與真假、心算<b>現金找零</b>，收完找完才【開閘放行】。</li>
+          <li><b class="hot">攔救護車一次、客訴 5 次、闖關／撞柵 3 次、損失超過 $500</b> 任一項 ＝ 解雇。</li>
+          <li>第一次玩？先上<b>新手教學</b>，一步步帶你收費。</li>
         </ul>
+        <button id="btnTutorial" class="big-btn tut-btn">📖 新手教學<span id="tutBadge" class="rec-badge">第一次玩推薦</span></button>
         <button id="btnStart" class="big-btn">開始上班</button>
         <p class="hint">建議直式手機遊玩・開啟音效體驗更佳</p>
       </div>

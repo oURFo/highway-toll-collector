@@ -86,6 +86,14 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1016; col
 .tab-btn.active { background: linear-gradient(#fbbf24, #f59e0b); color: #1f2937; border-color: #fde68a; box-shadow: 0 0 12px rgba(251, 191, 36, .4); }
 .tab-ico { font-size: 20px; }
 .tab-badge { position: absolute; top: -8px; right: -4px; background: #16a34a; border-radius: 999px; font-size: 13px; padding: 1px 6px; animation: pulse 1s infinite; }
+#fareStrip { display: flex; align-items: center; gap: 4px; margin-top: 7px; padding: 3px; border: 2px solid #fbbf24; border-radius: 8px; background: #0f1a24; flex: none; }
+.fs-label { font-size: 11px; font-weight: 900; color: #fbbf24; writing-mode: vertical-rl; letter-spacing: 1px; padding: 0 1px; }
+.fs { flex: 1; display: flex; align-items: center; justify-content: center; gap: 2px; height: 26px; border-radius: 5px; font-size: 11.5px; font-weight: 900; color: #13233a; white-space: nowrap; }
+.fs b { font-size: 15px; font-family: Georgia, serif; margin-left: 2px; }
+.fs-blue { background: #6aa8eb; }
+.fs-green { background: #5dbd79; }
+.fs-orange { background: #f29a45; }
+.fs-free { background: #fee2e2; color: #b91c1c; flex: .8; }
 .tab-page { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding-top: 8px; }
 
 .tray-box, #changeTray { background: linear-gradient(#0f1a24, #16222e); border: 2px solid #334155; border-radius: 12px; padding: 6px 8px 8px; box-shadow: inset 0 3px 10px rgba(0, 0, 0, .5); }
@@ -163,6 +171,25 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1016; col
 .coin-btn { border-radius: 50%; aspect-ratio: 1 / 1; height: auto; max-height: 64px; justify-self: center; width: 100%; color: #3b2f13; }
 .coin-btn b { font-size: 20px; }
 .denom-btn.pop { animation: pop .18s; }
+
+/* ===== 新手教學 ===== */
+#coach { position: absolute; top: 44px; left: 6px; right: 6px; z-index: 30; background: rgba(15, 23, 42, .96); border: 2px solid #fbbf24; border-radius: 12px; padding: 8px 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .6); animation: slideIn .25s ease-out; }
+.coach-head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+.coach-badge { background: #fbbf24; color: #1f2937; font-weight: 900; padding: 1px 8px; border-radius: 999px; }
+#coachSkip { margin-left: auto; background: none; border: 1px solid #475569; color: #cbd5e1; border-radius: 6px; font-size: 12px; padding: 2px 8px; cursor: pointer; }
+#coachText { font-size: 14px; line-height: 1.55; color: #f1f5f9; }
+#coachText b { color: #fde68a; }
+#coachText b.b { color: #7cc0ff; }
+#coachText b.g { color: #7fe39b; }
+#coachText b.y { color: #fbbf24; }
+.coach-btns { display: flex; justify-content: flex-end; gap: 8px; }
+.coach-btns button { margin-top: 6px; border: 0; border-radius: 8px; font-weight: 900; font-size: 15px; padding: 7px 16px; cursor: pointer; }
+#coachNext, #coachPlay { background: linear-gradient(#fde047, #f59e0b); color: #1f2937; }
+#coachHome { background: #475569; color: #fff; }
+.tut-hl { position: relative; z-index: 2; animation: tutGlow 1s ease-in-out infinite !important; outline: 3px solid #fde047; outline-offset: 2px; }
+.big-btn.tut-btn { position: relative; background: linear-gradient(#93c5fd, #3b82f6); color: #fff; box-shadow: 0 5px 0 #1e3a8a; }
+.rec-badge { position: absolute; top: -9px; right: 10px; background: #ef4444; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 999px; }
+@keyframes tutGlow { 50% { outline-color: rgba(253, 224, 71, .2); box-shadow: 0 0 18px rgba(253, 224, 71, .8); } }
 
 /* ===== 疊層 ===== */
 #toast { position: fixed; left: 50%; top: 30%; transform: translate(-50%, -10px); background: rgba(15, 23, 42, .95); color: #fff; font-weight: 900; font-size: 15px; padding: 8px 16px; border-radius: 10px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 40; white-space: nowrap; border: 1px solid #475569; }

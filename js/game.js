@@ -15,8 +15,9 @@
   let stopX = 60;
   let toastTimer = null;
 
-  function newState() {
+  function newState(tut = false) {
     return {
+      tut: tut ? { i: 0 } : null,
       running: false, t: GAME_TIME, spawnIn: 0, nextHonk: 4,
       queue: [], booth: null, racer: null, gateBusy: false, gateBroken: false,
       tray: [], seq: 0, lastTick: 0, photoCd: 0,
@@ -62,9 +63,7 @@
     const id = ++S.seq;
     const r = Math.random();
     const car = { id, plate: plate(), driver: pick(DRIVERS), changeGiven: 0, accepted: false, phase: 'queue' };
-    if (id > 2 && r < 0.10 && !S.racer) {
-      return Object.assign(car, { racer: true, kind: 'racer', colors: { body: pick(RACER_COLORS) }, driver: '😎' });
-    }
+    if (id > 2 && r < 0.10 && !S.racer) return Object.assign(car, racerSpec());
     if (id > 1 && r < 0.20) {
       const kind = pick(['ambulance', 'ambulance', 'fire', 'police']);
       return Object.assign(car, { type: 'emergency', emergency: true, kind, fare: 0, payment: null, maxPatience: EMERGENCY_PATIENCE });
@@ -87,6 +86,21 @@
     else if (m < 0.50 && (type === 'small' || Math.random() < 0.3)) mode = 'bigbill';
     car.payment = genPayment(car, mode);
     return car;
+  }
+
+  function racerSpec() {
+    return { racer: true, kind: 'racer', colors: { body: pick(RACER_COLORS) }, driver: '😎' };
+  }
+
+  function spawnCustom(spec) {
+    const car = Object.assign({ id: ++S.seq, plate: plate(), driver: pick(DRIVERS), changeGiven: 0, accepted: false, phase: 'queue', maxPatience: PATIENCE }, spec);
+    car.fare = FARES[car.type];
+    createCarEl(car);
+    car.el.style.left = `${el.scene.clientWidth + 30}px`;
+    el.lane.appendChild(car.el);
+    void car.el.offsetWidth;
+    S.queue.push(car);
+    layout();
   }
 
   function paymentValid(car) {
@@ -181,6 +195,7 @@
       bubble(car, offerLine(car), car.emergency ? 'alert' : '');
       if (car.emergency) Sfx.sirenStart();
       renderTray();
+      tutEvent('offer');
     });
   }
 
@@ -207,6 +222,7 @@
     el.lightRacer.classList.remove('on');
     el.racerWarn.classList.add('hidden');
     if (!caught) {
+      tutEvent('racerMiss');
       S.stats.escapes++;
       S.stats.duty++;
       log(`漏抓闖關車 ${r.plate}（逃費＋失職）`, 'bad');
@@ -227,6 +243,7 @@
   }
 
   function acceptTicket() {
+    if (!S || !S.running || !tutAllow('accept')) return;
     if (!boothReady() || S.booth.phase !== 'waiting') { toast('托盤上沒有東西'); return; }
     const car = S.booth;
     if (!car.payment || car.payment.kind !== 'ticket') { toast('這不是回數票'); Sfx.error(); return; }
@@ -234,9 +251,11 @@
     car.accepted = true;
     Sfx.tear();
     renderTray();
+    tutEvent('accept');
   }
 
   function rejectPayment() {
+    if (!S || !S.running || !tutAllow('reject')) return;
     if (!boothReady() || S.booth.phase !== 'waiting') { toast('托盤上沒有東西'); return; }
     const car = S.booth;
     if (car.emergency) {
@@ -273,17 +292,19 @@
       face(car, '😒');
     }
     renderTray();
+    tutEvent('reject');
     later(1300, () => {
       if (S.booth !== car || car.phase !== 'reoffer') return;
-      if (!valid) car.payment = genPayment(car, 'normal');
+      if (!valid) car.payment = car.nextPayment || genPayment(car, 'normal');
       car.phase = 'waiting';
       bubble(car, valid ? '拿去啦！' : offerLine(car), valid ? 'angry' : '');
       renderTray();
+      tutEvent('offer');
     });
   }
 
   function openGate() {
-    if (!S || !S.running) return;
+    if (!S || !S.running || !tutAllow('gate')) return;
     if (S.gateBusy || S.gateBroken) { toast('柵欄動作中'); return; }
     if (!boothReady()) { toast('目前沒有車輛停靠'); return; }
     release(S.booth);
@@ -304,6 +325,7 @@
       toast(`📸 舉發成功！車牌 ${S.racer.plate}`, 'good');
       Sfx.good();
       endRacer(true);
+      tutEvent('photo');
     } else {
       toast('畫面中沒有闖關車');
     }
@@ -323,6 +345,7 @@
     if (!S || !S.running) return;
     const sum = S.tray.reduce((a, b) => a + b, 0);
     if (!sum) { toast('找零托盤是空的'); return; }
+    if (!tutAllow('give', sum)) return;
     if (!boothReady() || S.booth.phase !== 'waiting') { toast('沒有可以交付的駕駛'); return; }
     S.booth.changeGiven += sum;
     S.tray = [];
@@ -330,6 +353,7 @@
     toast(`已交付找零 $${sum}`);
     renderChange();
     renderTray();
+    tutEvent('give');
   }
 
   // ---------- 放行判定 ----------
@@ -372,6 +396,7 @@
     st.passed++;
     el.pass.textContent = `通行 ${st.passed}`;
     depart(car, reaction, false);
+    tutEvent('gate');
   }
 
   function timeout(car) {
@@ -494,8 +519,8 @@
 
   function renderHud() {
     const t = Math.max(0, Math.ceil(S.t));
-    el.timer.textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-    el.timer.classList.toggle('danger', S.t <= 20);
+    el.timer.textContent = S.tut ? '教學' : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+    el.timer.classList.toggle('danger', !S.tut && S.t <= 20);
     const car = S.booth;
     if (car && car.phase !== 'arriving' && car.phase !== 'leaving' && car.patience != null) {
       const pct = Math.max(0, car.patience / car.maxPatience);
@@ -512,17 +537,18 @@
     if (!S || !S.running) return;
     const dt = Math.min(0.1, (now - S.lastTick) / 1000);
     S.lastTick = now;
-    S.t -= dt;
     S.photoCd -= dt;
 
-    if (S.t <= 10 && Math.ceil(S.t) !== Math.ceil(S.t + dt)) Sfx.tick();
-    if (S.t <= 0) { endGame(); return; }
-
-    S.spawnIn -= dt;
-    if (S.spawnIn <= 0) { spawn(); S.spawnIn += SPAWN_EVERY; }
+    if (!S.tut) {
+      S.t -= dt;
+      if (S.t <= 10 && Math.ceil(S.t) !== Math.ceil(S.t + dt)) Sfx.tick();
+      if (S.t <= 0) { endGame(); return; }
+      S.spawnIn -= dt;
+      if (S.spawnIn <= 0) { spawn(); S.spawnIn += SPAWN_EVERY; }
+    }
 
     const car = S.booth;
-    if (car && (car.phase === 'waiting' || car.phase === 'reoffer')) {
+    if (!S.tut && car && (car.phase === 'waiting' || car.phase === 'reoffer')) {
       car.patience -= dt;
       if (!car.emergency && !car.urged && car.patience < car.maxPatience * 0.3) {
         car.urged = true;
@@ -558,16 +584,109 @@
     el.gate.style.setProperty('--arm', `${Math.round(70 * scale)}px`);
   }
 
-  function startGame() {
+  // ---------- 新手教學 ----------
+  const TUT = [
+    { text: '歡迎來到<b>民國 88 年</b>的國道收費站！<br>在 2013 年 eTag 全面上路以前，每台車經過收費站都要<b>停下來</b>，把過路費交給收費亭裡的收費員——也就是你。', next: true },
+    { text: '駕駛可以付<b>現金</b>，或交出事先買好的<b>回數票</b>（一張抵一次過路費）。<br>不同車種費率不同、票色也不同，下方<b class="y">黃框票價列</b>隨時可以查。', next: true, hl: '#fareStrip' },
+    { enter: () => spawnCustom({ type: 'small', kind: 'sedan', colors: { body: '#c0392b' }, payment: makeTicket('blue') }), text: '第一台車來了！先看上方畫面判斷車種：這是一台<b>小型車</b>，應收 <b>40 元</b>。', wait: 'offer' },
+    { text: '他遞出<b class="b">藍色回數票</b>（小型車 40 元），有紅色「高公局驗訖」章、也沒過期，正確！<br>按【收下回數票】。', wait: 'accept', hl: '#btnAccept' },
+    { text: '收好了！按【開閘放行】讓他離開。', wait: 'gate', hl: '#btnGate' },
+    { enter: () => spawnCustom({ type: 'big', kind: 'bus', colors: { body: '#f4f6f7', accent: '#1f618d' }, payment: makeTicket('blue'), nextPayment: makeTicket('green') }), text: '接著是一台<b>遊覽車</b>，屬於<b>大型車</b>，應收 <b>50 元</b>。', wait: 'offer' },
+    { text: '大型車要用 <b class="g">50 元綠票</b>，他卻拿 <b class="b">40 元藍票</b>想混過去！<br>按【退回重給】。', wait: 'reject', hl: '#btnReject' },
+    { text: '駕駛正在換票…', wait: 'offer' },
+    { text: '這次是<b class="g">綠票</b>，正確！收下吧。', wait: 'accept', hl: '#btnAccept' },
+    { text: '放行！', wait: 'gate', hl: '#btnGate' },
+    { enter: () => spawnCustom({ type: 'small', kind: 'sedan', colors: { body: '#2e86c1' }, payment: makeTicket('blue', 'nostamp'), nextPayment: { kind: 'cash', amount: 40 } }), text: '又一台小型車。這次要<b>仔細檢查票面</b>…', wait: 'offer' },
+    { text: '這張藍票<b>少了紅色「高公局驗訖」章</b>，是假票！<br>假票還可能<b>字跡模糊、缺角破損、或已過期</b>（今天是 88 年 2 月 15 日）。按【退回重給】。', wait: 'reject', hl: '#btnReject' },
+    { text: '被抓包的駕駛正在翻錢包…', wait: 'offer' },
+    { text: '他改付<b>現金 40 元</b>，剛好不用找錢，直接【開閘放行】。', wait: 'gate', hl: '#btnGate' },
+    { enter: () => spawnCustom({ type: 'trailer', kind: 'trailer', colors: { body: '#1f3a5f', box: '#c0392b' }, payment: { kind: 'cash', amount: 100 } }), text: '貨櫃<b>聯結車</b>來了，應收 <b>65 元</b>。', wait: 'offer' },
+    { text: '他付了 <b>100 元</b>：100 − 65 ＝ <b>要找 35 元</b>。<br>點上方【收銀找零】分頁。', wait: 'tabcash', hl: '.tab-btn[data-tab=cash]' },
+    { text: '點 <b>10 元 ×3</b>、<b>5 元 ×1</b> 湊出 35 元，再按【交付找零】。點錯可以按【清空】重來。', wait: 'give', check: (sum) => sum === 35, fail: '金額不對！要找 35 元，按【清空】重來', hl: '#denoms, #btnGive' },
+    { text: '找好了！切回【票務與閘門】，按【開閘放行】。<br>記住：<b>收完、找完才放行</b>，提早按會損失或被客訴。', wait: 'gate', hl: '.tab-btn[data-tab=gate], #btnGate' },
+    { enter: () => spawnCustom({ type: 'emergency', emergency: true, kind: 'ambulance', payment: null, maxPatience: EMERGENCY_PATIENCE }), text: '聽到鳴笛聲了嗎？', wait: 'offer' },
+    { text: '<b>救護車、消防車、警車免收費！</b><br>不能退回、也不能拖延，馬上【開閘放行】。攔一次就會被解雇！', wait: 'gate', hl: '#btnGate' },
+    { text: '最後一關：有些飆車族會<b>不停車直接衝過去</b>。<br>看到紅色「闖關車輛逼近」警示時，<b>3 秒內</b>按【緊急拍照舉發】。準備好就按下一步。', next: true, hl: '#btnPhoto' },
+    { enter: () => startRacer(Object.assign({ id: ++S.seq, plate: plate() }, racerSpec())), text: '來了！快按【緊急拍照舉發】！', wait: 'photo', hl: '#btnPhoto' },
+    { text: '教學完成！🎉<br>正式上班時<b>每 7 秒</b>來一台車、駕駛只等 <b>20 秒</b>，還會遇到掏大鈔、混假票的客人。3 分鐘內別被解雇喔！', final: true },
+  ];
+
+  function tutGo(i) {
+    S.tut.i = i;
+    const st = TUT[i];
+    document.querySelectorAll('.tut-hl').forEach((n) => n.classList.remove('tut-hl'));
+    if (st.hl) document.querySelectorAll(st.hl).forEach((n) => n.classList.add('tut-hl'));
+    $('#coachText').innerHTML = st.text;
+    $('#coachStep').textContent = `${i + 1} / ${TUT.length}`;
+    $('#coachNext').classList.toggle('hidden', !st.next);
+    $('#coachHome').classList.toggle('hidden', !st.final);
+    $('#coachPlay').classList.toggle('hidden', !st.final);
+    $('#coachSkip').classList.toggle('hidden', !!st.final);
+    if (st.final) {
+      try { localStorage.setItem('tollTutDone', '1'); } catch (e) { /* private mode */ }
+      Sfx.good();
+    }
+    if (st.enter) st.enter();
+  }
+
+  function tutEvent(name) {
+    if (!S || !S.tut) return;
+    const i = S.tut.i;
+    const st = TUT[i];
+    if (name === 'racerMiss' && st.wait === 'photo') {
+      toast('太慢了！再來一次', 'bad');
+      later(1500, () => { if (S.tut.i === i) st.enter(); });
+      return;
+    }
+    if (st.wait === name) later(name === 'offer' ? 200 : 450, () => { if (S.tut.i === i) tutGo(i + 1); });
+  }
+
+  function tutAllow(name, data) {
+    if (!S || !S.tut) return true;
+    const st = TUT[S.tut.i];
+    if (st.wait === name && (!st.check || st.check(data))) return true;
+    toast(st.wait === name ? st.fail : '先照教學提示操作喔 👆', 'bad');
+    Sfx.error();
+    return false;
+  }
+
+  function quitToTitle() {
+    if (S) S.running = false;
+    session++;
+    Sfx.sirenStop();
+    el.lane.innerHTML = '';
+    el.farLane.innerHTML = '';
+    document.querySelectorAll('.tut-hl').forEach((n) => n.classList.remove('tut-hl'));
+    $('#coach').classList.add('hidden');
+    el.result.classList.add('hidden');
+    el.start.classList.remove('hidden');
+    refreshTutBadge();
+  }
+
+  function refreshTutBadge() {
+    let done = false;
+    try { done = localStorage.getItem('tollTutDone') === '1'; } catch (e) { /* private mode */ }
+    $('#tutBadge').classList.toggle('hidden', done);
+  }
+
+  function startTutorial() {
+    startGame(true);
+    $('#coach').classList.remove('hidden');
+    tutGo(0);
+  }
+
+  function startGame(tut = false) {
     Sfx.init();
     session++;
+    $('#coach').classList.add('hidden');
+    document.querySelectorAll('.tut-hl').forEach((n) => n.classList.remove('tut-hl'));
     el.lane.innerHTML = '';
     el.farLane.innerHTML = '';
     el.gate.className = '';
     el.lightGate.className = 'lamp red';
     el.lightRacer.classList.remove('on');
     el.racerWarn.classList.add('hidden');
-    S = newState();
+    S = newState(tut);
     measure();
     el.date.textContent = GAME_DATE.label;
     el.pass.textContent = '通行 0';
@@ -652,8 +771,8 @@
     el.result.scrollTop = 0;
     if (r.g === 'F') setTimeout(() => Sfx.stamp(), 650);
     else if (r.g === 'S') Sfx.good();
-    $('#btnAgain').onclick = startGame;
-    $('#btnHome').onclick = () => { el.result.classList.add('hidden'); el.start.classList.remove('hidden'); };
+    $('#btnAgain').onclick = () => startGame();
+    $('#btnHome').onclick = quitToTitle;
   }
 
   // ---------- 分頁與事件 ----------
@@ -661,6 +780,7 @@
     document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
     $('#tabGate').classList.toggle('hidden', tab !== 'gate');
     $('#tabCash').classList.toggle('hidden', tab !== 'cash');
+    tutEvent(`tab${tab}`);
   }
 
   document.querySelectorAll('.tab-btn').forEach((b) => b.addEventListener('pointerdown', () => switchTab(b.dataset.tab)));
@@ -677,7 +797,13 @@
   $('#btnPhoto').addEventListener('pointerdown', photo);
   $('#btnClear').addEventListener('click', clearChange);
   $('#btnGive').addEventListener('click', giveChange);
-  $('#btnStart').addEventListener('click', startGame);
+  $('#btnStart').addEventListener('click', () => startGame());
+  $('#btnTutorial').addEventListener('click', startTutorial);
+  $('#coachNext').addEventListener('click', () => tutGo(S.tut.i + 1));
+  $('#coachSkip').addEventListener('click', quitToTitle);
+  $('#coachHome').addEventListener('click', quitToTitle);
+  $('#coachPlay').addEventListener('click', () => startGame());
+  refreshTutBadge();
   el.mute.addEventListener('click', () => {
     Sfx.init();
     Sfx.setMuted(!Sfx.muted);
