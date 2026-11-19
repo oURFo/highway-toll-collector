@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1720">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>國道收費員 Highway Toll Collector</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎫</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 上半部：收費亭窗口視角 -->
+    <section id="topView">
+      <div id="hud">
+        <div class="flex items-center gap-2">
+          <div id="timer" class="led-timer">3:00</div>
+          <span id="dateTag" class="hud-date"></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="queueCount" class="hud-chip">排隊 0</span>
+          <span id="passCount" class="hud-chip pass">通行 0</span>
+          <button id="btnMute" class="mute-btn" aria-label="音效開關">🔊</button>
+        </div>
+      </div>
+      <div id="scene">
+        <div class="sky"></div>
+        <div class="mountains"></div>
+        <div class="canopy">
+          <div class="sign-board">
+            <span class="plum">1</span>
+            <span class="sign-text">泰山收費站<small>TAISHAN TOLL STATION</small></span>
+            <span class="lane-no">3</span>
+          </div>
+          <div class="sign-sub"><span>回數票</span><span>現金</span></div>
+        </div>
+        <div class="road far"></div>
+        <div class="road near"></div>
+        <div id="farLane"></div>
+        <div id="lane"></div>
+        <div id="gate"><div class="post"></div><div class="arm"></div></div>
+        <div id="lights">
+          <div class="light-item"><i id="lightGate" class="lamp red"></i><span>柵欄</span></div>
+          <div class="light-item"><i id="lightSiren" class="lamp siren"></i><span>公務</span></div>
+          <div class="light-item"><i id="lightRacer" class="lamp alert"></i><span>闖關</span></div>
+        </div>
+        <div id="racerWarn" class="hidden">⚠ 闖關車輛逼近！</div>
+        <div class="booth-frame"><div class="pillar l"></div><div class="pillar r"></div><div class="sill"></div><div class="glare"></div></div>
+        <div id="flash"></div>
+      </div>
+    </section>
+
+    <!-- 下半部：玩家工作台 -->
+    <section id="workbench">
+      <div id="tabs">
+        <button class="tab-btn active" data-tab="gate"><span class="tab-ico">🎫</span>票務與閘門</button>
+        <button class="tab-btn" data-tab="cash"><span class="tab-ico">💰</span>收銀找零<span id="cashBadge" class="tab-badge hidden">💵</span></button>
+      </div>
+
+      <div id="tabGate" class="tab-page">
+        <div class="tray-box">
+          <div class="tray-head"><span class="tray-label">交付托盤</span><span id="trayState" class="tray-state"></span></div>
+          <div id="handItem" class="hand-item"></div>
+        </div>
+        <div class="btn-row">
+          <button id="btnAccept" class="act-btn accept">🎫 收下回數票</button>
+          <button id="btnReject" class="act-btn reject">↩ 退回重給</button>
+        </div>
+        <div class="btn-row big">
+          <button id="btnGate" class="act-btn gate">🟢 開閘放行</button>
+          <button id="btnPhoto" class="act-btn photo">📸 緊急拍照舉發</button>
+        </div>
+      </div>
+
+      <div id="tabCash" class="tab-page hidden">
+        <div class="paid-bar">
+          <span>駕駛付款 <b id="paidInfo">—</b></span>
+          <span>已找出 <b id="givenInfo">$0</b></span>
+        </div>
+        <div id="changeTray">
+          <div class="tray-head"><span class="tray-label">找零托盤</span><span class="tray-led">$<span id="changeTotal">0</span></span></div>
+          <div id="changeChips"></div>
+        </div>
+        <div id="denoms">
+          <button class="denom-btn bill-btn b500" data-v="500"><b>500</b><i>元</i></button>
+          <button class="denom-btn bill-btn b100" data-v="100"><b>100</b><i>元</i></button>
+          <button class="denom-btn coin-btn c50" data-v="50"><b>50</b></button>
+          <button class="denom-btn coin-btn c10" data-v="10"><b>10</b></button>
+          <button class="denom-btn coin-btn c5" data-v="5"><b>5</b></button>
+        </div>
+        <div class="btn-row">
+          <button id="btnClear" class="act-btn reset">清空 Reset</button>
+          <button id="btnGive" class="act-btn give">交付找零 ➜</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="toast"></div>
+    <div id="timeUp" class="hidden">收班時間到！</div>
+
+    <!-- 開始畫面 -->
+    <div id="startScreen" class="overlay">
+      <div class="start-card">
+        <div class="title-wrap">
+          <div class="title-plum">國道</div>
+          <h1 class="title">國道收費員</h1>
+          <p class="title-en">HIGHWAY TOLL COLLECTOR</p>
+          <p class="title-sub">民國 88 年・春節連假・泰山收費站 第 3 車道</p>
+        </div>
+        <div class="fare-table">
+          <div class="fare"><span class="fare-ico">🚗</span><span>小型車</span><b>40</b><i class="tk t-blue-mini">藍票</i></div>
+          <div class="fare"><span class="fare-ico">🚌</span><span>大型車<small>遊覽車／貨車</small></span><b>50</b><i class="tk t-green-mini">綠票</i></div>
+          <div class="fare"><span class="fare-ico">🚛</span><span>聯結車<small>貨櫃拖車</small></span><b>65</b><i class="tk t-orange-mini">橘票</i></div>
+          <div class="fare"><span class="fare-ico">🚑</span><span>救護／消防／警車</span><b>0</b><i class="tk free">免收・秒開閘</i></div>
+        </div>
+        <p class="fare-warn">⚠ 開始上班後<b>系統不會再提示費率</b>，請牢記！</p>
+        <ul class="howto">
+          <li>每 <b>7 秒</b>來一台車，停靠後駕駛耐心 <b>20 秒</b>，歸零就<b class="hot">撞斷柵欄</b>闖關（維修費 $300）。</li>
+          <li><b>回數票</b>：票色要對車種，再檢查<b>假票</b>（字跡模糊、缺角破損、過期、沒有「高公局驗訖」章）。對就【收下】，不對就【退回重給】。</li>
+          <li><b>現金</b>：切到【收銀找零】心算「付款 − 費率」，點面額後按【交付找零】，剛好就免找。</li>
+          <li>收完錢、找完錢再按【開閘放行】。<b class="hot">提早放行</b>＝錢沒收到或沒找完！</li>
+          <li><b class="hot">闖關車</b>衝過來時，3 秒內按【緊急拍照舉發】。</li>
+          <li><b class="hot">攔救護車一次、客訴 5 次、闖關／撞柵 3 次、損失超過 $500</b> 任一項 ＝ 直接解雇。</li>
+        </ul>
+        <button id="btnStart" class="big-btn">開始上班</button>
+        <p class="hint">建議直式手機遊玩・開啟音效體驗更佳</p>
+      </div>
+    </div>
+
+    <!-- 結算畫面 -->
+    <div id="resultScreen" class="overlay hidden">
+      <div id="resultBody" class="result-wrap"></div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
