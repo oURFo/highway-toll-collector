@@ -1,10 +1,15 @@
 // ===== 遊戲常數與素材（全部以 SVG / HTML 繪製，免外部圖檔） =====
 const GAME_TIME = 180;
-const SPAWN_EVERY = 7;
+const SPAWN_EVERY = 6;
+const CONVOY_CHANCE = 0.15;
+const CONVOY_SIZE = [3, 6];
+const CONVOY_GAP = 1.2;
+const CONVOY_COOLDOWN = 25;
+const CONVOY_EARLIEST = 15;
 const PATIENCE = 20;
 const EMERGENCY_PATIENCE = 8;
 const RACER_WINDOW = 3;
-const PASS_TARGET = 18;
+const PASS_TARGET = 20;
 const CRASH_REPAIR = 300;
 const GAME_DATE = { y: 88, m: 2, d: 15, label: '88年2月15日・春節連假' };
 

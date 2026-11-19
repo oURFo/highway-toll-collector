@@ -18,10 +18,10 @@
   function newState(tut = false) {
     return {
       tut: tut ? { i: 0 } : null,
-      running: false, t: GAME_TIME, spawnIn: 0, nextHonk: 4,
+      running: false, t: GAME_TIME, spawnIn: 0, nextHonk: 4, convoyLeft: 0, convoyCd: 0,
       queue: [], booth: null, racer: null, gateBusy: false, gateBroken: false,
       tray: [], seq: 0, lastTick: 0, photoCd: 0,
-      stats: { passed: 0, loss: 0, complaints: 0, duty: 0, ambulance: 0, escapes: 0, crashes: 0, caught: 0, overpay: 0, underpay: 0, wrongTicket: 0, misReject: 0, spawned: 0 },
+      stats: { passed: 0, loss: 0, complaints: 0, duty: 0, ambulance: 0, escapes: 0, crashes: 0, caught: 0, overpay: 0, underpay: 0, wrongTicket: 0, misReject: 0, spawned: 0, convoys: 0 },
       log: [],
     };
   }
@@ -544,7 +544,24 @@
       if (S.t <= 10 && Math.ceil(S.t) !== Math.ceil(S.t + dt)) Sfx.tick();
       if (S.t <= 0) { endGame(); return; }
       S.spawnIn -= dt;
-      if (S.spawnIn <= 0) { spawn(); S.spawnIn += SPAWN_EVERY; }
+      S.convoyCd -= dt;
+      if (S.spawnIn <= 0) {
+        spawn();
+        if (S.convoyLeft > 0) {
+          S.convoyLeft--;
+          S.spawnIn += S.convoyLeft > 0 ? CONVOY_GAP : SPAWN_EVERY;
+        } else if (S.convoyCd <= 0 && GAME_TIME - S.t >= CONVOY_EARLIEST && Math.random() < CONVOY_CHANCE) {
+          const size = CONVOY_SIZE[0] + Math.floor(Math.random() * (CONVOY_SIZE[1] - CONVOY_SIZE[0] + 1));
+          S.convoyLeft = size - 1;
+          S.convoyCd = CONVOY_COOLDOWN;
+          S.stats.convoys++;
+          S.spawnIn += CONVOY_GAP;
+          toast(`🚗🚙🚌 連假車潮湧入！一口氣來 ${size} 台`, 'bad');
+          Sfx.honk(true);
+        } else {
+          S.spawnIn += SPAWN_EVERY;
+        }
+      }
     }
 
     const car = S.booth;
@@ -608,7 +625,7 @@
     { text: '<b>救護車、消防車、警車免收費！</b><br>不能退回、也不能拖延，馬上【開閘放行】。攔一次就會被解雇！', wait: 'gate', hl: '#btnGate' },
     { text: '最後一關：有些飆車族會<b>不停車直接衝過去</b>。<br>看到紅色「闖關車輛逼近」警示時，<b>3 秒內</b>按【緊急拍照舉發】。準備好就按下一步。', next: true, hl: '#btnPhoto' },
     { enter: () => startRacer(Object.assign({ id: ++S.seq, plate: plate() }, racerSpec())), text: '來了！快按【緊急拍照舉發】！', wait: 'photo', hl: '#btnPhoto' },
-    { text: '教學完成！🎉<br>正式上班時<b>每 7 秒</b>來一台車、駕駛只等 <b>20 秒</b>，還會遇到掏大鈔、混假票的客人。3 分鐘內別被解雇喔！', final: true },
+    { text: '教學完成！🎉<br>正式上班時<b>每 6 秒</b>來一台車，還會有<b>連假車潮一口氣來 3～6 台</b>；駕駛只等 <b>20 秒</b>，也會遇到掏大鈔、混假票的客人。3 分鐘內別被解雇喔！', final: true },
   ];
 
   function tutGo(i) {
